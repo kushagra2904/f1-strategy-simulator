@@ -19,13 +19,8 @@ app = FastAPI(
 # ✅ CORS CONFIGURATION (WORKS FOR LOCAL + DEPLOYED FRONTEND)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://f1-strategy-simulator-jjts50rj4-kushagra-gautams-projects.vercel.app",
-        "https://f1-strategy-simulator-beta.vercel.app".
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,  # must be False when using "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
