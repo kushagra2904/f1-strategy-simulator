@@ -21,7 +21,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://f1-strategy-simulator-jjts50rj4-kushagra-gautams-projects.vercel.app"
+        "http://localhost:3000",
+        "https://f1-strategy-simulator-jjts50rj4-kushagra-gautams-projects.vercel.app",
+        "https://f1-strategy-simulator-beta.vercel.app".
     ],
     allow_credentials=True,
     allow_methods=["*"],
