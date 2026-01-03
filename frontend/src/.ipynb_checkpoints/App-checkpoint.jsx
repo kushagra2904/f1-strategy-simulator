@@ -76,7 +76,7 @@ export default function App() {
     try {
       const selectedDriver = DRIVERS.find((d) => d.id === driver);
 
-      const response = await fetch("http://127.0.0.1:8000/optimize", {
+      const response = await fetch("https://f1-strategy-simulator.onrender.com/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
