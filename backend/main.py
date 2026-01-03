@@ -16,9 +16,13 @@ app = FastAPI(
     version="2.2"
 )
 
+# ✅ CORS CONFIGURATION (WORKS FOR LOCAL + DEPLOYED FRONTEND)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://f1-strategy-simulator-jjts50rj4-kushagra-gautams-projects.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,43 +66,24 @@ DEFAULT_TRACK = {"laps": 52, "sc_prob": 0.05, "pit_loss": 22}
 # ---------------------------
 
 DRIVER_PACE_DELTA = {
-    # Red Bull
     "Max Verstappen": -0.35,
     "Sergio Pérez": -0.12,
-
-    # Mercedes
     "Lewis Hamilton": -0.15,
     "George Russell": -0.13,
-
-    # Ferrari
     "Charles Leclerc": -0.16,
     "Carlos Sainz": -0.14,
-
-    # McLaren
     "Lando Norris": -0.18,
     "Oscar Piastri": -0.17,
-
-    # Aston Martin
     "Fernando Alonso": -0.12,
     "Lance Stroll": +0.08,
-
-    # Alpine
     "Pierre Gasly": -0.05,
     "Esteban Ocon": -0.06,
-
-    # Williams
     "Alex Albon": -0.04,
     "Logan Sargeant": +0.25,
-
-    # RB
     "Yuki Tsunoda": -0.07,
     "Daniel Ricciardo": -0.03,
-
-    # Sauber
     "Valtteri Bottas": +0.02,
     "Zhou Guanyu": +0.06,
-
-    # Haas
     "Nico Hülkenberg": -0.01,
     "Kevin Magnussen": +0.04,
 }
@@ -130,7 +115,6 @@ class OptimizeRequest(BaseModel):
 def generate_safety_car_periods(total_laps, sc_prob):
     sc_periods = []
     lap = 1
-
     while lap <= total_laps:
         if np.random.rand() < sc_prob:
             duration = np.random.randint(3, 6)
@@ -138,7 +122,6 @@ def generate_safety_car_periods(total_laps, sc_prob):
             lap += duration
         else:
             lap += 1
-
     return sc_periods
 
 
@@ -161,15 +144,13 @@ def simulate_strategy(strategy, sc_periods, total_laps, pit_loss, driver_delta):
                 break
 
             tire_age += 1
-
             X = pd.DataFrame({
                 "TireAge": [tire_age],
                 "LapNumber": [lap_ptr],
                 "CompoundEncoded": [enc]
             })
 
-            lap_time = model.predict(X)[0]
-            lap_time += driver_delta
+            lap_time = model.predict(X)[0] + driver_delta
 
             if is_sc_lap(lap_ptr, sc_periods):
                 lap_time *= 1.3
@@ -186,14 +167,12 @@ def simulate_strategy(strategy, sc_periods, total_laps, pit_loss, driver_delta):
 def generate_strategies(total_laps):
     strategies = []
 
-    # One-stop
     for pit_lap in range(12, total_laps - 12, 8):
         strategies.append([
             {"compound": "SOFT", "length": pit_lap},
             {"compound": "HARD", "length": total_laps - pit_lap}
         ])
 
-    # Two-stop (limited)
     for first_pit in range(14, total_laps - 30, 12):
         second_pit = first_pit + 18
         if second_pit < total_laps - 10:
@@ -229,19 +208,11 @@ def optimize(req: OptimizeRequest):
     strategies = generate_strategies(total_laps)
 
     results = []
-
     for strat in strategies:
         time = simulate_strategy(
-            strat,
-            sc_periods,
-            total_laps,
-            pit_loss,
-            driver_delta
+            strat, sc_periods, total_laps, pit_loss, driver_delta
         )
-        results.append({
-            "strategy": strat,
-            "total_time": time
-        })
+        results.append({"strategy": strat, "total_time": time})
 
     results.sort(key=lambda x: x["total_time"])
 
@@ -253,6 +224,11 @@ def optimize(req: OptimizeRequest):
         "best_strategy": results[0],
         "top_5_strategies": results[:5]
     }
+
+# ---------------------------
+# LOCAL / RENDER ENTRY POINT
+# ---------------------------
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
