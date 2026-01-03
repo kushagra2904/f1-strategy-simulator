@@ -253,3 +253,6 @@ def optimize(req: OptimizeRequest):
         "best_strategy": results[0],
         "top_5_strategies": results[:5]
     }
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
