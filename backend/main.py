@@ -14,22 +14,21 @@ import os
 app = FastAPI(
     title="AI-Based F1 Strategy Simulator",
     description="Backend API for Formula 1 race strategy optimization",
-    version="2.3"
+    version="2.4"
 )
 
 # ---------------------------
-# CORS (FIXED FOR VERCEL + RENDER)
+# CORS (VERCEL + RENDER SAFE)
 # ---------------------------
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # allow ALL Vercel preview + prod URLs
-    allow_credentials=False,      # MUST be False with "*"
+    allow_origins=["*"],      # allow all Vercel preview + prod URLs
+    allow_credentials=False,  # MUST be False with "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Explicit OPTIONS handler (preflight safety)
 @app.options("/{path:path}")
 def options_handler(path: str):
     return JSONResponse(status_code=200)
@@ -129,33 +128,42 @@ def generate_safety_car_periods(total_laps, sc_prob):
     return sc_periods
 
 
+def is_sc_lap(lap, sc_periods):
+    return any(start <= lap <= end for start, end in sc_periods)
+
+
 def simulate_strategy(strategy, sc_periods, total_laps, pit_loss, driver_delta):
     race_time = 0.0
     lap_ptr = 1
 
-    for i, stint in enumerate(strategy):
-        enc = compound_encoder.transform([stint["compound"]])[0]
-        tire_age = 0
+    for stint_idx, stint in enumerate(strategy):
+        remaining = total_laps - lap_ptr + 1
+        length = min(stint["length"], remaining)
+        if length <= 0:
+            break
 
-        for _ in range(stint["length"]):
-            if lap_ptr > total_laps:
-                break
+        compound_encoded = compound_encoder.transform([stint["compound"]])[0]
 
-            tire_age += 1
-            X = pd.DataFrame({
-                "TireAge": [tire_age],
-                "LapNumber": [lap_ptr],
-                "CompoundEncoded": [enc]
-            })
+        tire_ages = np.arange(1, length + 1)
+        lap_numbers = np.arange(lap_ptr, lap_ptr + length)
 
-            lap_time = model.predict(X)[0] + driver_delta
-            if any(s <= lap_ptr <= e for s, e in sc_periods):
-                lap_time *= 1.3
+        X = pd.DataFrame({
+            "TireAge": tire_ages,
+            "LapNumber": lap_numbers,
+            "CompoundEncoded": compound_encoded
+        })
 
-            race_time += lap_time
-            lap_ptr += 1
+        lap_times = model.predict(X)
+        lap_times += driver_delta
 
-        if i < len(strategy) - 1:
+        for i, lap in enumerate(lap_numbers):
+            if is_sc_lap(lap, sc_periods):
+                lap_times[i] *= 1.3
+
+        race_time += lap_times.sum()
+        lap_ptr += length
+
+        if stint_idx < len(strategy) - 1:
             race_time += pit_loss
 
     return round(race_time, 2)
@@ -196,7 +204,7 @@ def optimize(req: OptimizeRequest):
 
     return {
         "track": req.track,
-        "track_laps": total_laps,   # ✅ REQUIRED BY FRONTEND
+        "track_laps": total_laps,
         "driver": req.driver,
         "driver_delta": driver_delta,
         "safety_car_periods": sc_periods,

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import numpy as np
 import pandas as pd
@@ -13,16 +14,24 @@ import os
 app = FastAPI(
     title="AI-Based F1 Strategy Simulator",
     description="Backend API for Formula 1 race strategy optimization",
-    version="2.2"
+    version="2.4"
 )
+
+# ---------------------------
+# CORS (VERCEL + RENDER SAFE)
+# ---------------------------
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
+    allow_origins=["*"],      # allow all Vercel preview + prod URLs
+    allow_credentials=False,  # MUST be False with "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.options("/{path:path}")
+def options_handler(path: str):
+    return JSONResponse(status_code=200)
 
 # ---------------------------
 # TRACK CONFIGURATION
@@ -58,52 +67,31 @@ TRACK_CONFIG = {
 DEFAULT_TRACK = {"laps": 52, "sc_prob": 0.05, "pit_loss": 22}
 
 # ---------------------------
-# DRIVER PACE DELTAS (sec/lap)
+# DRIVER PACE DELTAS
 # ---------------------------
 
 DRIVER_PACE_DELTA = {
-    # Red Bull
     "Max Verstappen": -0.35,
     "Sergio Pérez": -0.12,
-
-    # Mercedes
     "Lewis Hamilton": -0.15,
     "George Russell": -0.13,
-
-    # Ferrari
     "Charles Leclerc": -0.16,
     "Carlos Sainz": -0.14,
-
-    # McLaren
     "Lando Norris": -0.18,
     "Oscar Piastri": -0.17,
-
-    # Aston Martin
     "Fernando Alonso": -0.12,
-    "Lance Stroll": +0.08,
-
-    # Alpine
+    "Lance Stroll": 0.08,
     "Pierre Gasly": -0.05,
     "Esteban Ocon": -0.06,
-
-    # Williams
     "Alex Albon": -0.04,
-    "Logan Sargeant": +0.25,
-
-    # RB
+    "Logan Sargeant": 0.25,
     "Yuki Tsunoda": -0.07,
     "Daniel Ricciardo": -0.03,
-
-    # Sauber
-    "Valtteri Bottas": +0.02,
-    "Zhou Guanyu": +0.06,
-
-    # Haas
+    "Valtteri Bottas": 0.02,
+    "Zhou Guanyu": 0.06,
     "Nico Hülkenberg": -0.01,
-    "Kevin Magnussen": +0.04,
+    "Kevin Magnussen": 0.04,
 }
-
-DEFAULT_DRIVER_DELTA = 0.0
 
 # ---------------------------
 # LOAD MODELS
@@ -124,13 +112,12 @@ class OptimizeRequest(BaseModel):
     track: str
 
 # ---------------------------
-# HELPER FUNCTIONS
+# HELPERS
 # ---------------------------
 
 def generate_safety_car_periods(total_laps, sc_prob):
     sc_periods = []
     lap = 1
-
     while lap <= total_laps:
         if np.random.rand() < sc_prob:
             duration = np.random.randint(3, 6)
@@ -138,7 +125,6 @@ def generate_safety_car_periods(total_laps, sc_prob):
             lap += duration
         else:
             lap += 1
-
     return sc_periods
 
 
@@ -151,62 +137,39 @@ def simulate_strategy(strategy, sc_periods, total_laps, pit_loss, driver_delta):
     lap_ptr = 1
 
     for stint_idx, stint in enumerate(strategy):
-        compound = stint["compound"]
-        length = stint["length"]
-        enc = compound_encoder.transform([compound])[0]
-        tire_age = 0
+        remaining = total_laps - lap_ptr + 1
+        length = min(stint["length"], remaining)
+        if length <= 0:
+            break
 
-        for _ in range(length):
-            if lap_ptr > total_laps:
-                break
+        compound_encoded = compound_encoder.transform([stint["compound"]])[0]
 
-            tire_age += 1
+        tire_ages = np.arange(1, length + 1)
+        lap_numbers = np.arange(lap_ptr, lap_ptr + length)
 
-            X = pd.DataFrame({
-                "TireAge": [tire_age],
-                "LapNumber": [lap_ptr],
-                "CompoundEncoded": [enc]
-            })
+        X = pd.DataFrame({
+            "TireAge": tire_ages,
+            "LapNumber": lap_numbers,
+            "CompoundEncoded": compound_encoded
+        })
 
-            lap_time = model.predict(X)[0]
-            lap_time += driver_delta
+        lap_times = model.predict(X)
+        lap_times += driver_delta
 
-            if is_sc_lap(lap_ptr, sc_periods):
-                lap_time *= 1.3
+        for i, lap in enumerate(lap_numbers):
+            if is_sc_lap(lap, sc_periods):
+                lap_times[i] *= 1.3
 
-            race_time += lap_time
-            lap_ptr += 1
+        race_time += lap_times.sum()
+        lap_ptr += length
 
         if stint_idx < len(strategy) - 1:
             race_time += pit_loss
 
     return round(race_time, 2)
 
-
-def generate_strategies(total_laps):
-    strategies = []
-
-    # One-stop
-    for pit_lap in range(12, total_laps - 12, 8):
-        strategies.append([
-            {"compound": "SOFT", "length": pit_lap},
-            {"compound": "HARD", "length": total_laps - pit_lap}
-        ])
-
-    # Two-stop (limited)
-    for first_pit in range(14, total_laps - 30, 12):
-        second_pit = first_pit + 18
-        if second_pit < total_laps - 10:
-            strategies.append([
-                {"compound": "SOFT", "length": first_pit},
-                {"compound": "MEDIUM", "length": second_pit - first_pit},
-                {"compound": "HARD", "length": total_laps - second_pit}
-            ])
-
-    return strategies[:20]
-
 # ---------------------------
-# API ENDPOINTS
+# ENDPOINTS
 # ---------------------------
 
 @app.get("/")
@@ -218,38 +181,42 @@ def optimize(req: OptimizeRequest):
     cfg = TRACK_CONFIG.get(req.track, DEFAULT_TRACK)
 
     total_laps = cfg["laps"]
-    sc_prob = cfg["sc_prob"]
-    pit_loss = cfg["pit_loss"]
+    sc_periods = generate_safety_car_periods(total_laps, cfg["sc_prob"])
+    driver_delta = DRIVER_PACE_DELTA.get(req.driver, 0.0)
 
-    driver_delta = DRIVER_PACE_DELTA.get(req.driver, DEFAULT_DRIVER_DELTA)
-
-    np.random.seed(42)
-
-    sc_periods = generate_safety_car_periods(total_laps, sc_prob)
-    strategies = generate_strategies(total_laps)
+    strategies = []
+    for pit in range(12, total_laps - 12, 8):
+        strategies.append([
+            {"compound": "SOFT", "length": pit},
+            {"compound": "HARD", "length": total_laps - pit}
+        ])
 
     results = []
-
-    for strat in strategies:
-        time = simulate_strategy(
-            strat,
-            sc_periods,
-            total_laps,
-            pit_loss,
-            driver_delta
-        )
+    for strat in strategies[:20]:
         results.append({
             "strategy": strat,
-            "total_time": time
+            "total_time": simulate_strategy(
+                strat, sc_periods, total_laps, cfg["pit_loss"], driver_delta
+            )
         })
 
     results.sort(key=lambda x: x["total_time"])
 
     return {
         "track": req.track,
+        "track_laps": total_laps,
         "driver": req.driver,
         "driver_delta": driver_delta,
         "safety_car_periods": sc_periods,
         "best_strategy": results[0],
-        "top_5_strategies": results[:5]
+        "top_5_strategies": results[:5],
     }
+
+# ---------------------------
+# ENTRY POINT (RENDER SAFE)
+# ---------------------------
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
