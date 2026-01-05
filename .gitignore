@@ -226,3 +226,15 @@ results/
 
 # OS junk
 .DS_Store
+
+# Jupyter / Python
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# Node / Frontend
+node_modules/
+dist/
+
+# OS
+.DS_Store
