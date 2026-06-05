@@ -215,9 +215,11 @@ dist/
 .fastf1/
 fastf1_cache/
 
-# Model artifacts
+# Model artifacts: ignore stray pickles, but the backend's served model + its
+# encoders are required at runtime (main.py loads them on import), so keep them.
 *.pkl
 *.joblib
+!backend/models/*.pkl
 
 # Generated outputs
 outputs/
@@ -238,3 +240,5 @@ dist/
 
 # OS
 .DS_Store
+# Added by code-review-graph
+.code-review-graph/

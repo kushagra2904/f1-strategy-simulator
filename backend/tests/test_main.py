@@ -64,9 +64,13 @@ def test_safety_car_not_deployed_in_closing_laps():
 # build_lap_time_table
 # ---------------------------------------------------------------------------
 
+def _track_code(name="Monaco"):
+    return int(main.track_encoder.transform([name])[0])
+
+
 def test_lap_time_table_shape_and_padding():
     total = 12
-    table = build_lap_time_table(total, driver_delta=0.0)
+    table = build_lap_time_table(total, driver_delta=0.0, track_encoded=_track_code())
     for compound in main.compound_encoder.classes_:
         arr = table[compound]
         assert arr.shape == (total + 1, total + 1)
@@ -78,11 +82,22 @@ def test_lap_time_table_shape_and_padding():
 
 
 def test_lap_time_table_applies_driver_delta():
-    base = build_lap_time_table(10, driver_delta=0.0)
-    shifted = build_lap_time_table(10, driver_delta=5.0)
+    code = _track_code()
+    base = build_lap_time_table(10, driver_delta=0.0, track_encoded=code)
+    shifted = build_lap_time_table(10, driver_delta=5.0, track_encoded=code)
     for compound in base:
         diff = shifted[compound][1:, 1:] - base[compound][1:, 1:]
         assert np.allclose(diff, 5.0)
+
+
+def test_lap_time_table_differs_by_circuit():
+    # the whole point of the track feature: different circuits -> different pace
+    monaco = build_lap_time_table(10, driver_delta=0.0, track_encoded=_track_code("Monaco"))
+    monza = build_lap_time_table(10, driver_delta=0.0, track_encoded=_track_code("Monza"))
+    # at least one compound's lap-time surface must differ between circuits
+    assert any(
+        not np.allclose(monaco[c][1:, 1:], monza[c][1:, 1:]) for c in monaco
+    )
 
 
 # ---------------------------------------------------------------------------

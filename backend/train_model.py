@@ -7,15 +7,18 @@ circuit's surface, temperature and layout, so degradation predictions for other
 tracks are weak.
 
 This script reproduces that notebook's exact feature pipeline and model
-hyperparameters, but trains on MANY races at once. Run it to regenerate the two
-`.pkl` files in `models/`.
+hyperparameters, but trains on MANY races at once. Run it to regenerate the
+THREE `.pkl` files in `models/` (model, compound_encoder, track_encoder).
 
-Feature pipeline (identical to the notebook, kept in lock-step on purpose):
-    features = [TireAge, LapNumber, CompoundEncoded]   target = LapTimeSeconds
+Feature pipeline:
+    features = [TireAge, LapNumber, CompoundEncoded, TrackEncoded]
+    target   = LapTimeSeconds
     - keep only SOFT / MEDIUM / HARD laps
     - keep only accurate laps (FastF1 `IsAccurate`)
     - TireAge = lap position within each (Driver, Stint), 1-based, PER RACE
     - Compound -> CompoundEncoded via sklearn LabelEncoder
+    - Location (circuit) -> TrackEncoded via sklearn LabelEncoder, so the model
+      can distinguish circuits instead of averaging their pace into the error
     model = RandomForestRegressor(n_estimators=200, max_depth=10,
                                   random_state=42, n_jobs=-1)
 
@@ -54,9 +57,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 CACHE_DIR = os.path.join(BASE_DIR, "fastf1_cache")
 
-# --- pipeline constants (must match 02_tire_degradation_model.ipynb) -------
+# --- pipeline constants ----------------------------------------------------
+# Extends the original notebook pipeline with a TrackEncoded feature so the
+# model can tell circuits apart (base lap pace swings ~75-95s across tracks);
+# without it, pooling many races just averages that spread into the error.
 VALID_COMPOUNDS = ["SOFT", "MEDIUM", "HARD"]
-FEATURES = ["TireAge", "LapNumber", "CompoundEncoded"]
+FEATURES = ["TireAge", "LapNumber", "CompoundEncoded", "TrackEncoded"]
 TARGET = "LapTimeSeconds"
 RANDOM_STATE = 42
 TEST_SIZE = 0.2
@@ -135,20 +141,23 @@ def build_dataset(year: int, races: list) -> pd.DataFrame:
             continue
 
         # Prefer the canonical event name for labelling (works for round-number
-        # inputs too); fall back to whatever was passed in.
+        # inputs too); fall back to whatever was passed in. `Location` is the
+        # circuit-stable key the model trains on and that main.py maps to.
         try:
             label = str(session.event["EventName"])
+            location = str(session.event["Location"])
         except Exception:
             label = str(race)
+            location = str(race)
 
         cleaned = clean_session_laps(session)
         if cleaned is None:
             print(f"  ! skipped {year} {label}: no usable laps", file=sys.stderr)
             continue
 
-        cleaned = cleaned.assign(Race=label)
+        cleaned = cleaned.assign(Race=label, Location=location)
         frames.append(cleaned)
-        print(f"  + {year} {label}: {len(cleaned)} laps")
+        print(f"  + {year} {label} @ {location}: {len(cleaned)} laps")
 
     if not frames:
         raise RuntimeError("No races produced usable laps; nothing to train on.")
@@ -160,11 +169,13 @@ def build_dataset(year: int, races: list) -> pd.DataFrame:
 
 
 def train(data: pd.DataFrame):
-    """Fit the encoder + RandomForest on the combined dataset; return both and
-    the held-out MAE."""
-    encoder = LabelEncoder()
+    """Fit the compound + track encoders and the RandomForest on the combined
+    dataset; return (model, compound_encoder, track_encoder, mae)."""
+    compound_encoder = LabelEncoder()
+    track_encoder = LabelEncoder()
     data = data.copy()
-    data["CompoundEncoded"] = encoder.fit_transform(data["Compound"])
+    data["CompoundEncoded"] = compound_encoder.fit_transform(data["Compound"])
+    data["TrackEncoded"] = track_encoder.fit_transform(data["Location"])
 
     X = data[FEATURES]
     y = data[TARGET]
@@ -177,17 +188,21 @@ def train(data: pd.DataFrame):
 
     mae = mean_absolute_error(y_test, model.predict(X_test))
     print(f"\nHeld-out MAE: {mae:.3f} s")
-    return model, encoder, mae
+    print(f"Circuits learned: {len(track_encoder.classes_)}")
+    return model, compound_encoder, track_encoder, mae
 
 
-def save(model, encoder) -> None:
+def save(model, compound_encoder, track_encoder) -> None:
     os.makedirs(MODEL_DIR, exist_ok=True)
-    model_path = os.path.join(MODEL_DIR, "tire_degradation_model.pkl")
-    encoder_path = os.path.join(MODEL_DIR, "compound_encoder.pkl")
-    joblib.dump(model, model_path)
-    joblib.dump(encoder, encoder_path)
-    print(f"Saved model   -> {model_path}")
-    print(f"Saved encoder -> {encoder_path}")
+    artifacts = {
+        "tire_degradation_model.pkl": model,
+        "compound_encoder.pkl": compound_encoder,
+        "track_encoder.pkl": track_encoder,
+    }
+    for filename, obj in artifacts.items():
+        path = os.path.join(MODEL_DIR, filename)
+        joblib.dump(obj, path)
+        print(f"Saved -> {path}")
 
 
 def _warn_on_sklearn_version() -> None:
@@ -229,12 +244,12 @@ def main() -> None:
     races = season_race_rounds(args.year) if args.all else args.races
     print(f"Building dataset: {args.year}, {len(races)} race(s)")
     data = build_dataset(args.year, races)
-    model, encoder, _ = train(data)
+    model, compound_encoder, track_encoder, _ = train(data)
 
     if args.dry_run:
         print("\n--dry-run: artifacts NOT written.")
         return
-    save(model, encoder)
+    save(model, compound_encoder, track_encoder)
 
 
 if __name__ == "__main__":

@@ -39,35 +39,38 @@ def options_handler(path: str):
 # ---------------------------
 # `file` is the image asset served by the frontend from /public/tracks/.
 # The frontend fetches this list from /tracks so it stays a single source.
+# `circuit` is the FastF1 `Location` the tire model was trained on; it maps this
+# display name to the TrackEncoded feature (see build_lap_time_table). Every
+# circuit here MUST exist in track_encoder.classes_ or prediction will fail.
 
 TRACK_CONFIG = {
-    "Bahrain": {"laps": 57, "sc_prob": 0.04, "pit_loss": 24, "file": "bahrain.png"},
-    "Saudi Arabia (Jeddah)": {"laps": 50, "sc_prob": 0.08, "pit_loss": 20, "file": "jeddah.png"},
-    "Australia (Albert Park)": {"laps": 58, "sc_prob": 0.07, "pit_loss": 20, "file": "albert_park.png"},
-    "Japan (Suzuka)": {"laps": 53, "sc_prob": 0.06, "pit_loss": 22, "file": "suzuka.png"},
-    "China (Shanghai)": {"laps": 56, "sc_prob": 0.05, "pit_loss": 23, "file": "shanghai.png"},
-    "Miami": {"laps": 57, "sc_prob": 0.06, "pit_loss": 21, "file": "miami.png"},
-    "Emilia Romagna (Imola)": {"laps": 63, "sc_prob": 0.06, "pit_loss": 21, "file": "imola.png"},
-    "Monaco": {"laps": 78, "sc_prob": 0.12, "pit_loss": 18, "file": "monaco.png"},
-    "Canada (Montreal)": {"laps": 70, "sc_prob": 0.09, "pit_loss": 19, "file": "montreal.png"},
-    "Spain (Barcelona)": {"laps": 66, "sc_prob": 0.04, "pit_loss": 22, "file": "barcelona.png"},
-    "Austria (Spielberg)": {"laps": 71, "sc_prob": 0.05, "pit_loss": 20, "file": "spielberg.png"},
-    "Great Britain (Silverstone)": {"laps": 52, "sc_prob": 0.06, "pit_loss": 21, "file": "silverstone.png"},
-    "Hungary (Budapest)": {"laps": 70, "sc_prob": 0.05, "pit_loss": 20, "file": "hungary.png"},
-    "Belgium (Spa)": {"laps": 44, "sc_prob": 0.07, "pit_loss": 23, "file": "spa.png"},
-    "Netherlands (Zandvoort)": {"laps": 72, "sc_prob": 0.06, "pit_loss": 20, "file": "zandvoort.png"},
-    "Italy (Monza)": {"laps": 53, "sc_prob": 0.04, "pit_loss": 23, "file": "monza.png"},
-    "Azerbaijan (Baku)": {"laps": 51, "sc_prob": 0.10, "pit_loss": 19, "file": "baku.png"},
-    "Singapore": {"laps": 62, "sc_prob": 0.12, "pit_loss": 18, "file": "singapore.png"},
-    "United States (COTA)": {"laps": 56, "sc_prob": 0.05, "pit_loss": 23, "file": "austin.png"},
-    "Mexico": {"laps": 71, "sc_prob": 0.04, "pit_loss": 24, "file": "mexico.png"},
-    "Brazil (Interlagos)": {"laps": 71, "sc_prob": 0.08, "pit_loss": 20, "file": "interlagos.png"},
-    "Las Vegas": {"laps": 50, "sc_prob": 0.06, "pit_loss": 22, "file": "vegas.png"},
-    "Qatar (Lusail)": {"laps": 57, "sc_prob": 0.03, "pit_loss": 25, "file": "lusail.png"},
-    "Abu Dhabi (Yas Marina)": {"laps": 58, "sc_prob": 0.04, "pit_loss": 24, "file": "yas_marina.png"},
+    "Bahrain": {"laps": 57, "sc_prob": 0.04, "pit_loss": 24, "file": "bahrain.png", "circuit": "Sakhir"},
+    "Saudi Arabia (Jeddah)": {"laps": 50, "sc_prob": 0.08, "pit_loss": 20, "file": "jeddah.png", "circuit": "Jeddah"},
+    "Australia (Albert Park)": {"laps": 58, "sc_prob": 0.07, "pit_loss": 20, "file": "albert_park.png", "circuit": "Melbourne"},
+    "Japan (Suzuka)": {"laps": 53, "sc_prob": 0.06, "pit_loss": 22, "file": "suzuka.png", "circuit": "Suzuka"},
+    "China (Shanghai)": {"laps": 56, "sc_prob": 0.05, "pit_loss": 23, "file": "shanghai.png", "circuit": "Shanghai"},
+    "Miami": {"laps": 57, "sc_prob": 0.06, "pit_loss": 21, "file": "miami.png", "circuit": "Miami Gardens"},
+    "Emilia Romagna (Imola)": {"laps": 63, "sc_prob": 0.06, "pit_loss": 21, "file": "imola.png", "circuit": "Imola"},
+    "Monaco": {"laps": 78, "sc_prob": 0.12, "pit_loss": 18, "file": "monaco.png", "circuit": "Monaco"},
+    "Canada (Montreal)": {"laps": 70, "sc_prob": 0.09, "pit_loss": 19, "file": "montreal.png", "circuit": "Montréal"},
+    "Spain (Barcelona)": {"laps": 66, "sc_prob": 0.04, "pit_loss": 22, "file": "barcelona.png", "circuit": "Barcelona"},
+    "Austria (Spielberg)": {"laps": 71, "sc_prob": 0.05, "pit_loss": 20, "file": "spielberg.png", "circuit": "Spielberg"},
+    "Great Britain (Silverstone)": {"laps": 52, "sc_prob": 0.06, "pit_loss": 21, "file": "silverstone.png", "circuit": "Silverstone"},
+    "Hungary (Budapest)": {"laps": 70, "sc_prob": 0.05, "pit_loss": 20, "file": "hungary.png", "circuit": "Budapest"},
+    "Belgium (Spa)": {"laps": 44, "sc_prob": 0.07, "pit_loss": 23, "file": "spa.png", "circuit": "Spa-Francorchamps"},
+    "Netherlands (Zandvoort)": {"laps": 72, "sc_prob": 0.06, "pit_loss": 20, "file": "zandvoort.png", "circuit": "Zandvoort"},
+    "Italy (Monza)": {"laps": 53, "sc_prob": 0.04, "pit_loss": 23, "file": "monza.png", "circuit": "Monza"},
+    "Azerbaijan (Baku)": {"laps": 51, "sc_prob": 0.10, "pit_loss": 19, "file": "baku.png", "circuit": "Baku"},
+    "Singapore": {"laps": 62, "sc_prob": 0.12, "pit_loss": 18, "file": "singapore.png", "circuit": "Marina Bay"},
+    "United States (COTA)": {"laps": 56, "sc_prob": 0.05, "pit_loss": 23, "file": "austin.png", "circuit": "Austin"},
+    "Mexico": {"laps": 71, "sc_prob": 0.04, "pit_loss": 24, "file": "mexico.png", "circuit": "Mexico City"},
+    "Brazil (Interlagos)": {"laps": 71, "sc_prob": 0.08, "pit_loss": 20, "file": "interlagos.png", "circuit": "São Paulo"},
+    "Las Vegas": {"laps": 50, "sc_prob": 0.06, "pit_loss": 22, "file": "vegas.png", "circuit": "Las Vegas"},
+    "Qatar (Lusail)": {"laps": 57, "sc_prob": 0.03, "pit_loss": 25, "file": "lusail.png", "circuit": "Lusail"},
+    "Abu Dhabi (Yas Marina)": {"laps": 58, "sc_prob": 0.04, "pit_loss": 24, "file": "yas_marina.png", "circuit": "Yas Island"},
 }
 
-DEFAULT_TRACK = {"laps": 52, "sc_prob": 0.05, "pit_loss": 22, "file": "silverstone.png"}
+DEFAULT_TRACK = {"laps": 52, "sc_prob": 0.05, "pit_loss": 22, "file": "silverstone.png", "circuit": "Silverstone"}
 
 # ---------------------------
 # DRIVERS (2025 GRID)
@@ -138,6 +141,7 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 model = joblib.load(os.path.join(MODEL_DIR, "tire_degradation_model.pkl"))
 compound_encoder = joblib.load(os.path.join(MODEL_DIR, "compound_encoder.pkl"))
+track_encoder = joblib.load(os.path.join(MODEL_DIR, "track_encoder.pkl"))
 
 # ---------------------------
 # REQUEST MODEL
@@ -168,11 +172,12 @@ def generate_safety_car_periods(total_laps, sc_prob, rng):
     return sc_periods
 
 
-def build_lap_time_table(total_laps, driver_delta):
+def build_lap_time_table(total_laps, driver_delta, track_encoded):
     """Precompute lap_time[compound_idx, lap_number, tire_age] in one batched
     model.predict call. Indices 1..total_laps are valid; index 0 is padding.
     Strategy simulation then sums array slices instead of calling the model
-    per stint, so adding many strategies stays cheap."""
+    per stint, so adding many strategies stays cheap. `track_encoded` is the
+    circuit's LabelEncoder code, held constant across the whole grid."""
     compounds = list(compound_encoder.classes_)
     laps = np.arange(1, total_laps + 1)
     ages = np.arange(1, total_laps + 1)
@@ -187,6 +192,7 @@ def build_lap_time_table(total_laps, driver_delta):
         "CompoundEncoded": compound_encoder.transform(
             [compounds[i] for i in comp_idx.ravel()]
         ),
+        "TrackEncoded": track_encoded,
     })
     preds = model.predict(X).reshape(len(compounds), total_laps, total_laps)
     preds += driver_delta
@@ -295,6 +301,15 @@ def optimize(req: OptimizeRequest):
     total_laps = cfg["laps"]
     driver_delta = DRIVER_PACE_DELTA[req.driver]
 
+    # Map the track to the circuit the model was trained on (item: track feature)
+    if cfg["circuit"] not in track_encoder.classes_:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Track '{req.track}' maps to circuit '{cfg['circuit']}', "
+                   "which the model was not trained on. Retrain with this circuit.",
+        )
+    track_encoded = int(track_encoder.transform([cfg["circuit"]])[0])
+
     # --- determinism (item 2): seed a local RNG, echo it back ---
     seed = req.seed if req.seed is not None else int(np.random.SeedSequence().entropy % (2**32))
     rng = np.random.default_rng(seed)
@@ -304,7 +319,7 @@ def optimize(req: OptimizeRequest):
     for start, end in sc_periods:
         sc_mask[start:end + 1] = True
 
-    lap_time_table = build_lap_time_table(total_laps, driver_delta)
+    lap_time_table = build_lap_time_table(total_laps, driver_delta, track_encoded)
 
     results = []
     for strat in generate_strategies(total_laps):
