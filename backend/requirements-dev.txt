@@ -1,0 +1,5 @@
+# Test-only dependencies (review item #14). Not needed to run the API.
+#     ./.venv/bin/pip install -r requirements-dev.txt
+#     ./.venv/bin/python -m pytest
+pytest>=7.0
+httpx>=0.27

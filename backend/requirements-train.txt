@@ -1,0 +1,7 @@
+# Extra dependencies for retraining the tire-degradation model (train_model.py).
+# NOT needed to run the API — keep these out of the runtime image/requirements.txt.
+#
+# Install into the SAME environment as the backend so the regenerated .pkl files
+# stay compatible with the pinned scikit-learn 1.6.1 (see requirements.txt):
+#     ./.venv/bin/pip install -r requirements-train.txt
+fastf1>=3.3
