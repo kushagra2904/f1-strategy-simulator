@@ -2,32 +2,23 @@ import { useState } from "react";
 import { teamLogoSources } from "../data/assets";
 
 /**
- * Team logo with multi-format support (svg/png/jpg/…). Falls back to a
- * team-coloured dot if no logo file is present. Give it a `key={team}` so the
- * attempt index resets when the team changes.
+ * Team logo with multi-format support (svg/png/jpg/…). Renders nothing if no
+ * logo file is present (team identity is still carried by the card's livery
+ * stripe + name). Give it a `key={team}` so the attempt index resets when the
+ * team changes.
  */
 export function TeamLogo({
   team,
-  color,
   className = "",
 }: {
   team: string;
-  color: string;
   className?: string;
 }) {
   const sources = teamLogoSources(team);
   const [index, setIndex] = useState(0);
   const src = sources[index];
 
-  if (!src) {
-    return (
-      <span
-        className="inline-block size-3 rounded-full"
-        style={{ background: color }}
-        aria-label={team}
-      />
-    );
-  }
+  if (!src) return null;
 
   return (
     <img

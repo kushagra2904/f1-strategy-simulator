@@ -23,18 +23,15 @@ export function DriverCard({ driver }: { driver: Driver | null }) {
 
       <div className="relative z-10 py-6">
         <p className="hud-label">Driver</p>
+        <TeamLogo
+          key={driver.team}
+          team={driver.team}
+          className="mt-2 mb-2 h-10 w-auto max-w-[180px]"
+        />
         <h2 className="font-display text-2xl font-bold text-on-surface">
           {driver.name}
         </h2>
-        <div className="mt-2 flex items-center gap-2">
-          <TeamLogo
-            key={driver.team}
-            team={driver.team}
-            color={driver.team_color}
-            className="h-5 w-8"
-          />
-          <span className="text-sm text-on-surface-variant">{driver.team}</span>
-        </div>
+        <p className="mt-1 text-sm text-on-surface-variant">{driver.team}</p>
       </div>
 
       {/* full-body cutout, anchored to the bottom edge */}
