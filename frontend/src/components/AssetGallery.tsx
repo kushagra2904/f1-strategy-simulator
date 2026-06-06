@@ -47,7 +47,7 @@ export default function AssetGallery({
       </header>
 
       <div className="h-[540px] w-full">
-        <Canvas shadows camera={{ position: [4.5, 2.6, 5.5], fov: 42 }}>
+        <Canvas shadows camera={{ position: [5.8, 3.2, 6.8], fov: 42 }}>
           <color attach="background" args={["#0b0b12"]} />
           <ambientLight intensity={0.35} />
           <directionalLight
@@ -95,8 +95,9 @@ export default function AssetGallery({
           />
           <OrbitControls
             enablePan={false}
+            target={[0, 0.4, 0]}
             minDistance={4}
-            maxDistance={14}
+            maxDistance={16}
             minPolarAngle={0.2}
             maxPolarAngle={Math.PI / 2.05}
             autoRotate
