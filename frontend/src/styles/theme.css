@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* Class-based dark mode: a `.dark` class on <html> activates the dark variant,
+   driven by ThemeProvider (system / light / dark). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   Apex Engineering Interface — design tokens
+   Semantic CSS variables, defined per theme. Tailwind utilities
+   (bg-surface, text-on-surface, ...) resolve to these via @theme.
+   ============================================================ */
+
+:root {
+  /* Light theme */
+  --surface: #eef0f4;
+  --surface-dim: #d9dce3;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f7fa;
+  --surface-container: #f0f1f6;
+  --surface-container-high: #e7e9ef;
+  --surface-container-highest: #e0e3ea;
+  --on-surface: #1a1b22;
+  --on-surface-variant: #44464f;
+  --outline: #c2c5cf;
+  --outline-strong: #9aa0ac;
+
+  --primary: #e10600;       /* Ferrari red — primary action / alerts */
+  --on-primary: #ffffff;
+  --primary-muted: #ffd9d6;
+
+  --secondary: #0097a7;     /* cyan, darkened for light-mode contrast */
+  --on-secondary: #ffffff;
+
+  --warning: #b58900;       /* yellow-flag / caution */
+  --error: #ba1a1a;
+
+  /* Tyre compounds (legible on either theme) */
+  --c-soft: #e10600;
+  --c-medium: #d8a200;
+  --c-hard: #5b6470;
+
+  /* Glassmorphism + glow */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(20, 20, 30, 0.10);
+  --glass-rim: rgba(255, 255, 255, 0.75);
+  --glow: rgba(225, 6, 0, 0.22);
+
+  color-scheme: light;
+}
+
+.dark {
+  /* Dark theme — values from the Stitch "Apex Engineering Interface" palette */
+  --surface: #13131b;
+  --surface-dim: #0d0d16;
+  --surface-container-lowest: #0d0d16;
+  --surface-container-low: #1b1b24;
+  --surface-container: #1f1f28;
+  --surface-container-high: #292933;
+  --surface-container-highest: #34343e;
+  --on-surface: #e4e1ee;
+  --on-surface-variant: #b9b9c6;
+  --outline: #3a3a45;
+  --outline-strong: #5e5e6b;
+
+  --primary: #e10600;
+  --on-primary: #ffffff;
+  --primary-muted: #4a0f0d;
+
+  --secondary: #00d2be;     /* Mercedes cyan */
+  --on-secondary: #00201c;
+
+  --warning: #f9d949;
+  --error: #ffb4ab;
+
+  --c-soft: #ff3b30;
+  --c-medium: #ffd23f;
+  --c-hard: #d7dbe3;
+
+  --glass-bg: rgba(21, 21, 30, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-rim: rgba(255, 255, 255, 0.14);
+  --glow: rgba(225, 6, 0, 0.45);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-lowest: var(--surface-container-lowest);
+  --color-surface-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-container-high);
+  --color-surface-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-strong: var(--outline-strong);
+
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-muted: var(--primary-muted);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+
+  --color-soft: var(--c-soft);
+  --color-medium: var(--c-medium);
+  --color-hard: var(--c-hard);
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--surface);
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  /* Level 1+ panel: glass surface with a top/left rim light. */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 1px 1px 0 0 var(--glass-rim);
+  }
+  /* Uppercase HUD-style label. */
+  .hud-label {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+  }
+  /* Monospaced, tabular numerals so changing values don't cause jitter. */
+  .telemetry {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  /* Focused/active digital glow. */
+  .glow-primary {
+    box-shadow: 0 0 12px 0 var(--glow);
+  }
+}
