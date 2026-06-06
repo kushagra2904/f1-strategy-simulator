@@ -21,6 +21,7 @@ from main import (
     TOP_N,
     TRACK_CONFIG,
     DRIVERS,
+    TEAMS,
     app,
     build_lap_time_table,
     generate_safety_car_periods,
@@ -216,7 +217,30 @@ def test_drivers_endpoint_matches_roster():
     assert resp.status_code == 200
     body = resp.json()
     assert len(body) == len(DRIVERS)
-    assert all({"id", "name"} <= d.keys() for d in body)
+    assert all({"id", "name", "team", "team_color"} <= d.keys() for d in body)
+    # every driver's team must be a real team, and the color must match it
+    team_color = {t["name"]: t["color"] for t in TEAMS}
+    for d in body:
+        assert d["team"] in team_color
+        assert d["team_color"] == team_color[d["team"]]
+
+
+def test_teams_endpoint_shape():
+    resp = client.get("/teams")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body) == len(TEAMS) == 11  # 2026 grid has 11 constructors
+    assert all({"id", "name", "color"} <= t.keys() for t in body)
+
+
+def test_grid_has_22_drivers_two_per_team():
+    resp = client.get("/drivers")
+    body = resp.json()
+    assert len(body) == 22  # 11 teams x 2 cars
+    per_team: dict[str, int] = {}
+    for d in body:
+        per_team[d["team"]] = per_team.get(d["team"], 0) + 1
+    assert all(count == 2 for count in per_team.values())
 
 
 def test_tracks_endpoint_shape():

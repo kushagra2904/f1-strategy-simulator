@@ -5,6 +5,14 @@ export type Compound = "SOFT" | "MEDIUM" | "HARD";
 export interface Driver {
   id: string;
   name: string;
+  team: string;
+  team_color: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface Track {

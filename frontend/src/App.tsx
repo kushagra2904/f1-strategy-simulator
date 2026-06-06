@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import type { Tab } from "./components/Header";
 import { ControlPanel } from "./components/ControlPanel";
+import { DriverCard } from "./components/DriverCard";
 import { TrackDisplay } from "./components/TrackDisplay";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { Placeholder } from "./components/Placeholder";
@@ -50,6 +51,7 @@ export default function App() {
   }, []);
 
   const selectedTrack = tracks.find((t) => t.name === trackName) ?? null;
+  const selectedDriver = drivers.find((d) => d.id === driverId) ?? null;
 
   async function handleOptimize() {
     const driver = drivers.find((d) => d.id === driverId);
@@ -81,6 +83,7 @@ export default function App() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="space-y-6">
               {metaError && <p className="text-error">{metaError}</p>}
+              <DriverCard driver={selectedDriver} />
               <ControlPanel
                 drivers={drivers}
                 tracks={tracks}

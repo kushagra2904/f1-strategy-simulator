@@ -24,6 +24,12 @@ export function ControlPanel({
   loading,
   disabled,
 }: ControlPanelProps) {
+  // Group drivers under their team (backend already orders them by team).
+  const driversByTeam = drivers.reduce<Record<string, Driver[]>>((acc, d) => {
+    (acc[d.team] ??= []).push(d);
+    return acc;
+  }, {});
+
   return (
     <section className="glass p-6">
       <h2 className="hud-label">Race Setup</h2>
@@ -35,10 +41,14 @@ export function ControlPanel({
           onChange={onDriverChange}
           disabled={disabled}
         >
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
+          {Object.entries(driversByTeam).map(([team, list]) => (
+            <optgroup key={team} label={team}>
+              {list.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </Select>
 

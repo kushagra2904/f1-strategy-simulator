@@ -73,33 +73,60 @@ TRACK_CONFIG = {
 DEFAULT_TRACK = {"laps": 52, "sc_prob": 0.05, "pit_loss": 22, "file": "silverstone.png", "circuit": "Silverstone"}
 
 # ---------------------------
-# DRIVERS (2025 GRID)
+# TEAMS (2026 GRID)
+# ---------------------------
+# 11 constructors for 2026, including the new Cadillac entry and Sauber's
+# rebrand to Audi. `color` is the team's primary livery accent (hex), served via
+# /teams so the frontend can theme per team. NOTE: Audi and Cadillac liveries
+# were not fully revealed at time of writing — their colors here are provisional.
+
+TEAMS = [
+    {"id": "MCL", "name": "McLaren", "color": "#FF8000"},
+    {"id": "FER", "name": "Ferrari", "color": "#E8002D"},
+    {"id": "RBR", "name": "Red Bull Racing", "color": "#3671C6"},
+    {"id": "MER", "name": "Mercedes", "color": "#00D2BE"},
+    {"id": "AST", "name": "Aston Martin", "color": "#229971"},
+    {"id": "ALP", "name": "Alpine", "color": "#0093CC"},
+    {"id": "WIL", "name": "Williams", "color": "#1868DB"},
+    {"id": "RB", "name": "Racing Bulls", "color": "#6692FF"},
+    {"id": "HAA", "name": "Haas", "color": "#9C9FA2"},
+    {"id": "AUD", "name": "Audi", "color": "#00594F"},      # provisional 2026 livery
+    {"id": "CAD", "name": "Cadillac", "color": "#B59410"},  # provisional 2026 livery
+]
+
+TEAM_COLOR = {t["name"]: t["color"] for t in TEAMS}
+
+# ---------------------------
+# DRIVERS (2026 GRID)
 # ---------------------------
 # `pace_delta` (seconds/lap vs. baseline) is a subjective estimate, NOT an
-# authoritative figure. Negative = faster. Single source of truth served via
-# /drivers so the frontend never duplicates the roster.
+# authoritative figure — especially for 2026, which brings all-new regulations,
+# so the competitive order is highly uncertain. Negative = faster. Single source
+# of truth served via /drivers so the frontend never duplicates the roster.
 
 DRIVERS = [
-    {"id": "VER", "name": "Max Verstappen", "pace_delta": -0.35},
-    {"id": "TSU", "name": "Yuki Tsunoda", "pace_delta": -0.05},
-    {"id": "LEC", "name": "Charles Leclerc", "pace_delta": -0.16},
-    {"id": "HAM", "name": "Lewis Hamilton", "pace_delta": -0.15},
-    {"id": "RUS", "name": "George Russell", "pace_delta": -0.15},
-    {"id": "ANT", "name": "Andrea Kimi Antonelli", "pace_delta": 0.02},
-    {"id": "NOR", "name": "Lando Norris", "pace_delta": -0.20},
-    {"id": "PIA", "name": "Oscar Piastri", "pace_delta": -0.20},
-    {"id": "ALO", "name": "Fernando Alonso", "pace_delta": -0.12},
-    {"id": "STR", "name": "Lance Stroll", "pace_delta": 0.08},
-    {"id": "GAS", "name": "Pierre Gasly", "pace_delta": -0.05},
-    {"id": "COL", "name": "Franco Colapinto", "pace_delta": 0.10},
-    {"id": "ALB", "name": "Alex Albon", "pace_delta": -0.04},
-    {"id": "SAI", "name": "Carlos Sainz", "pace_delta": -0.14},
-    {"id": "LAW", "name": "Liam Lawson", "pace_delta": 0.03},
-    {"id": "HAD", "name": "Isack Hadjar", "pace_delta": 0.05},
-    {"id": "OCO", "name": "Esteban Ocon", "pace_delta": -0.06},
-    {"id": "BEA", "name": "Oliver Bearman", "pace_delta": 0.07},
-    {"id": "HUL", "name": "Nico Hülkenberg", "pace_delta": -0.01},
-    {"id": "BOR", "name": "Gabriel Bortoleto", "pace_delta": 0.12},
+    {"id": "NOR", "name": "Lando Norris", "team": "McLaren", "pace_delta": -0.20},
+    {"id": "PIA", "name": "Oscar Piastri", "team": "McLaren", "pace_delta": -0.20},
+    {"id": "LEC", "name": "Charles Leclerc", "team": "Ferrari", "pace_delta": -0.16},
+    {"id": "HAM", "name": "Lewis Hamilton", "team": "Ferrari", "pace_delta": -0.15},
+    {"id": "VER", "name": "Max Verstappen", "team": "Red Bull Racing", "pace_delta": -0.30},
+    {"id": "HAD", "name": "Isack Hadjar", "team": "Red Bull Racing", "pace_delta": 0.04},
+    {"id": "RUS", "name": "George Russell", "team": "Mercedes", "pace_delta": -0.15},
+    {"id": "ANT", "name": "Andrea Kimi Antonelli", "team": "Mercedes", "pace_delta": -0.02},
+    {"id": "ALO", "name": "Fernando Alonso", "team": "Aston Martin", "pace_delta": -0.10},
+    {"id": "STR", "name": "Lance Stroll", "team": "Aston Martin", "pace_delta": 0.08},
+    {"id": "GAS", "name": "Pierre Gasly", "team": "Alpine", "pace_delta": -0.04},
+    {"id": "COL", "name": "Franco Colapinto", "team": "Alpine", "pace_delta": 0.10},
+    {"id": "ALB", "name": "Alex Albon", "team": "Williams", "pace_delta": -0.05},
+    {"id": "SAI", "name": "Carlos Sainz", "team": "Williams", "pace_delta": -0.12},
+    {"id": "LAW", "name": "Liam Lawson", "team": "Racing Bulls", "pace_delta": 0.03},
+    {"id": "LIN", "name": "Arvid Lindblad", "team": "Racing Bulls", "pace_delta": 0.14},
+    {"id": "OCO", "name": "Esteban Ocon", "team": "Haas", "pace_delta": -0.05},
+    {"id": "BEA", "name": "Oliver Bearman", "team": "Haas", "pace_delta": 0.05},
+    {"id": "HUL", "name": "Nico Hülkenberg", "team": "Audi", "pace_delta": -0.01},
+    {"id": "BOR", "name": "Gabriel Bortoleto", "team": "Audi", "pace_delta": 0.10},
+    {"id": "BOT", "name": "Valtteri Bottas", "team": "Cadillac", "pace_delta": 0.08},
+    {"id": "PER", "name": "Sergio Pérez", "team": "Cadillac", "pace_delta": 0.04},
 ]
 
 DRIVER_PACE_DELTA = {d["name"]: d["pace_delta"] for d in DRIVERS}
@@ -278,7 +305,20 @@ def home():
 
 @app.get("/drivers")
 def get_drivers():
-    return [{"id": d["id"], "name": d["name"]} for d in DRIVERS]
+    return [
+        {
+            "id": d["id"],
+            "name": d["name"],
+            "team": d["team"],
+            "team_color": TEAM_COLOR[d["team"]],
+        }
+        for d in DRIVERS
+    ]
+
+
+@app.get("/teams")
+def get_teams():
+    return TEAMS
 
 
 @app.get("/tracks")
