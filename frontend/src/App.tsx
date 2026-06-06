@@ -6,6 +6,7 @@ import { DriverCard } from "./components/DriverCard";
 import { TrackDisplay } from "./components/TrackDisplay";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { Placeholder } from "./components/Placeholder";
+import { CreditsFooter } from "./components/CreditsFooter";
 import { fetchDrivers, fetchTracks, optimizeStrategy } from "./lib/api";
 import type { Driver, OptimizeResponse, Track } from "./types/api";
 
@@ -112,6 +113,8 @@ export default function App() {
           />
         )}
       </main>
+
+      <CreditsFooter />
     </div>
   );
 }

@@ -19,6 +19,14 @@ lib64/
 # The Python `lib/` rule above also catches the frontend's source lib dir,
 # which is real app code (api client, formatters) — keep it tracked.
 !frontend/src/lib/
+
+# Driver/team imagery are official F1 assets kept LOCAL ONLY (not redistributed
+# in this repo). The app falls back to initials/colour when they're absent.
+frontend/public/drivers/*
+frontend/public/teams/*
+!frontend/public/drivers/.gitkeep
+!frontend/public/teams/.gitkeep
+
 parts/
 sdist/
 var/
