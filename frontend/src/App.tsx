@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import type { Tab } from "./components/Header";
 import { ControlPanel } from "./components/ControlPanel";
@@ -7,6 +7,9 @@ import { TrackDisplay } from "./components/TrackDisplay";
 import { ResultsPanel } from "./components/ResultsPanel";
 import { Placeholder } from "./components/Placeholder";
 import { CreditsFooter } from "./components/CreditsFooter";
+
+// Lazy so three.js only loads when the Assets tab is opened.
+const AssetGallery = lazy(() => import("./components/AssetGallery"));
 import { fetchDrivers, fetchTracks, optimizeStrategy } from "./lib/api";
 import type { Driver, OptimizeResponse, Track } from "./types/api";
 
@@ -102,14 +105,25 @@ export default function App() {
 
             <TrackDisplay track={selectedTrack} />
           </div>
+        ) : tab === "Assets" ? (
+          <Suspense
+            fallback={
+              <div className="glass grid place-items-center py-24">
+                <p className="hud-label">Loading 3D…</p>
+              </div>
+            }
+          >
+            <AssetGallery
+              drivers={drivers}
+              driverId={driverId}
+              onDriverChange={setDriverId}
+              driver={selectedDriver}
+            />
+          </Suspense>
         ) : (
           <Placeholder
             title={tab}
-            note={
-              tab === "Assets"
-                ? "Interactive 3D tracks and cars are coming in a later phase."
-                : "Live telemetry views are planned for a future update."
-            }
+            note="Live telemetry views are planned for a future update."
           />
         )}
       </main>

@@ -75,7 +75,42 @@ the livery-colour dot).
 
 ---
 
-## 3. Record attribution
+## 3. 3D models (Assets tab — optional)
+
+The **Assets** tab renders a **procedural, team-coloured car** on a stylized
+track. Want a realistic car? It's a **drop-in** — no code change:
+
+1. Get a **CC-licensed** model on [Sketchfab](https://sketchfab.com): search
+   "formula 1 car" or "open wheel", and in *Filters* set **Downloadable** +
+   **License → Creative Commons**. Pick one, note the author/licence.
+2. **Download → glTF (`.glb`)** (the autoconverted glTF option is fine).
+3. Save it as **`frontend/public/models/f1-car.glb`**.
+
+That's it — the gallery loads it automatically and falls back to the procedural
+car if it's absent or fails. (Loader: `src/components/CarModel.tsx`.)
+
+**Fitting the model.** Every model is authored at a different scale/rotation, so
+if it looks huge, tiny, or sideways, tweak the constants at the top of
+`CarModel.tsx`:
+
+```ts
+const SCALE = 1;                  // shrink/grow to fit
+const ROTATION = [0, 0, 0];       // radians — rotate upright / face forward
+const POSITION = [0, 0, 0];       // nudge onto the ground
+```
+
+**Notes**
+- If the model is **draco-compressed**, change the loader call in `CarModel.tsx`
+  to `useGLTF(MODEL_URL, true)` (enables the draco decoder).
+- Real models have a **baked livery**, so the per-team colour tint won't apply —
+  accept the model's colours, or keep per-team `.glb` files.
+- Add a credit entry to `IMAGE_ATTRIBUTIONS` for the model, like images.
+- The `.glb` is your asset — if it's CC-licensed you may commit it; large or
+  unclear-licence models are better kept local (the procedural fallback ships).
+
+---
+
+## 4. Record attribution
 
 For each third-party image you add, append an entry to `IMAGE_ATTRIBUTIONS` in
 [`src/data/assets.ts`](src/data/assets.ts). It powers the on-page **Image
