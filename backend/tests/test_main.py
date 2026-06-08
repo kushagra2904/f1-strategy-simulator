@@ -26,6 +26,7 @@ from main import (
     build_lap_time_table,
     generate_safety_car_periods,
     generate_strategies,
+    per_lap_telemetry,
     simulate_strategy,
 )
 
@@ -286,5 +287,71 @@ def test_optimize_rejects_unknown_track():
 def test_optimize_rejects_unknown_driver():
     resp = client.post(
         "/optimize", json={"driver": "Ayrton Senna", "track": "Monaco"}
+    )
+    assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# per_lap_telemetry helper
+# ---------------------------------------------------------------------------
+
+def test_per_lap_telemetry_sums_to_simulate_strategy():
+    # Hand-built table: every (lap, age) for both compounds costs 90s; pit = 20s.
+    total_laps = 10
+    table = {c: np.full((total_laps + 1, total_laps + 1), 90.0) for c in ("SOFT", "HARD")}
+    sc_mask = np.zeros(total_laps + 1, dtype=bool)
+    strategy = [{"compound": "SOFT", "length": 4}, {"compound": "HARD", "length": 6}]
+
+    laps, stints = per_lap_telemetry(strategy, sc_mask, total_laps, 20, table)
+
+    assert len(laps) == total_laps
+    assert [l["lap"] for l in laps] == list(range(1, total_laps + 1))
+    assert len(stints) == 2
+    # one pit-in lap (end of first stint), tagged with the pit time
+    pit_ins = [l for l in laps if l["pit_in"]]
+    assert len(pit_ins) == 1 and pit_ins[0]["lap"] == 4
+    # per-lap series reconstructs the same race time as simulate_strategy
+    total = sum(l["lap_time"] + l["pit_time"] for l in laps)
+    assert total == pytest.approx(
+        simulate_strategy(strategy, sc_mask, total_laps, 20, table), abs=0.05
+    )
+
+
+def test_telemetry_endpoint_matches_optimize_best_strategy():
+    payload = {"driver": "Max Verstappen", "track": "Monaco", "seed": 99}
+    opt = client.post("/optimize", json=payload).json()
+    best = opt["best_strategy"]
+
+    resp = client.post(
+        "/telemetry",
+        json={
+            "driver": payload["driver"],
+            "track": payload["track"],
+            "strategy": best["strategy"],
+            "seed": opt["seed"],
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+
+    assert body["track_laps"] == TRACK_CONFIG["Monaco"]["laps"]
+    assert len(body["laps"]) == body["track_laps"]
+    assert all(l["lap_time"] > 0 for l in body["laps"])
+    # same seed -> same safety-car windows, and flagged on the per-lap series
+    assert body["safety_car_periods"] == opt["safety_car_periods"]
+    sc_laps = {lap for start, end in body["safety_car_periods"] for lap in range(start, end + 1)}
+    assert all(l["safety_car"] == (l["lap"] in sc_laps) for l in body["laps"])
+    # telemetry total reconstructs the optimiser's race time for that strategy
+    assert body["total_time"] == pytest.approx(best["total_time"], abs=0.05)
+
+
+def test_telemetry_rejects_unknown_compound():
+    resp = client.post(
+        "/telemetry",
+        json={
+            "driver": "Max Verstappen",
+            "track": "Monaco",
+            "strategy": [{"compound": "WET", "length": 78}],
+        },
     )
     assert resp.status_code == 422

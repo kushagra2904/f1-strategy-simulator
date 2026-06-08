@@ -179,6 +179,18 @@ class OptimizeRequest(BaseModel):
     track: str
     seed: int | None = None
 
+
+class StintIn(BaseModel):
+    compound: str
+    length: int
+
+
+class TelemetryRequest(BaseModel):
+    driver: str
+    track: str
+    strategy: list[StintIn]
+    seed: int | None = None
+
 # ---------------------------
 # HELPERS
 # ---------------------------
@@ -261,6 +273,67 @@ def simulate_strategy(strategy, sc_mask, total_laps, pit_loss, lap_time_table):
             race_time += pit_loss * (SC_PIT_LOSS_FACTOR if under_sc else 1.0)
 
     return round(float(race_time), 2)
+
+
+def per_lap_telemetry(strategy, sc_mask, total_laps, pit_loss, lap_time_table):
+    """Walk a strategy lap-by-lap and emit the model's predicted lap time for
+    every lap, mirroring simulate_strategy's clamping / safety-car / pit-loss
+    logic. Returns (laps, stints) where each lap is a dict and each stint a
+    summary. The pit time for a stop is attributed to that stint's pit-in lap so
+    the per-lap series sums to the same race time simulate_strategy reports."""
+    laps_out = []
+    stints_out = []
+    lap_ptr = 1
+
+    for stint_idx, stint in enumerate(strategy):
+        remaining = total_laps - lap_ptr + 1
+        length = min(stint["length"], remaining)
+        if length <= 0:
+            break
+
+        compound = stint["compound"]
+        table = lap_time_table[compound]
+        start_lap = lap_ptr
+        end_lap = lap_ptr + length - 1
+        is_last = stint_idx == len(strategy) - 1
+
+        stint_times = []
+        for age in range(1, length + 1):
+            lap_no = lap_ptr + age - 1
+            sc = bool(sc_mask[lap_no])
+            lap_time = float(table[lap_no, age])
+            if sc:
+                lap_time *= SC_MULTIPLIER
+
+            pit_in = (not is_last) and (lap_no == end_lap)
+            pit_time = 0.0
+            if pit_in:
+                pit_time = pit_loss * (SC_PIT_LOSS_FACTOR if sc else 1.0)
+
+            laps_out.append({
+                "lap": lap_no,
+                "stint_index": stint_idx,
+                "compound": compound,
+                "tire_age": age,
+                "lap_time": round(lap_time, 3),
+                "pit_time": round(float(pit_time), 3),
+                "safety_car": sc,
+                "pit_in": pit_in,
+            })
+            stint_times.append(lap_time)
+
+        stints_out.append({
+            "stint_index": stint_idx,
+            "compound": compound,
+            "length": length,
+            "start_lap": start_lap,
+            "end_lap": end_lap,
+            "avg_time": round(float(np.mean(stint_times)), 3),
+            "best_time": round(float(np.min(stint_times)), 3),
+        })
+        lap_ptr += length
+
+    return laps_out, stints_out
 
 
 def generate_strategies(total_laps):
@@ -384,6 +457,67 @@ def optimize(req: OptimizeRequest):
         "safety_car_periods": sc_periods,
         "best_strategy": results[0],
         "top_5_strategies": results[:TOP_N],
+    }
+
+
+@app.post("/telemetry")
+def telemetry(req: TelemetryRequest):
+    # --- validation: mirror /optimize, no silent fallbacks ---
+    if req.track not in TRACK_CONFIG:
+        raise HTTPException(status_code=422, detail=f"Unknown track: {req.track}")
+    if req.driver not in DRIVER_PACE_DELTA:
+        raise HTTPException(status_code=422, detail=f"Unknown driver: {req.driver}")
+    if not req.strategy:
+        raise HTTPException(status_code=422, detail="strategy must have at least one stint")
+    for stint in req.strategy:
+        if stint.compound not in COMPOUNDS:
+            raise HTTPException(status_code=422, detail=f"Unknown compound: {stint.compound}")
+        if stint.length <= 0:
+            raise HTTPException(status_code=422, detail="stint length must be positive")
+
+    cfg = TRACK_CONFIG[req.track]
+    total_laps = cfg["laps"]
+    driver_delta = DRIVER_PACE_DELTA[req.driver]
+
+    if cfg["circuit"] not in track_encoder.classes_:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Track '{req.track}' maps to circuit '{cfg['circuit']}', "
+                   "which the model was not trained on. Retrain with this circuit.",
+        )
+    track_encoded = int(track_encoder.transform([cfg["circuit"]])[0])
+
+    # Reuse the caller's seed so safety-car windows match the /optimize result
+    # they already hold; otherwise sample a fresh one and echo it back.
+    seed = req.seed if req.seed is not None else int(np.random.SeedSequence().entropy % (2**32))
+    rng = np.random.default_rng(seed)
+
+    sc_periods = generate_safety_car_periods(total_laps, cfg["sc_prob"], rng)
+    sc_mask = np.zeros(total_laps + 1, dtype=bool)
+    for start, end in sc_periods:
+        sc_mask[start:end + 1] = True
+
+    lap_time_table = build_lap_time_table(total_laps, driver_delta, track_encoded)
+    strategy = [{"compound": s.compound, "length": s.length} for s in req.strategy]
+    laps, stints = per_lap_telemetry(
+        strategy, sc_mask, total_laps, cfg["pit_loss"], lap_time_table
+    )
+
+    total_time = round(sum(l["lap_time"] + l["pit_time"] for l in laps), 2)
+    fastest = min(laps, key=lambda l: l["lap_time"])
+
+    return {
+        "track": req.track,
+        "track_laps": total_laps,
+        "driver": req.driver,
+        "driver_delta": driver_delta,
+        "seed": seed,
+        "safety_car_periods": sc_periods,
+        "laps": laps,
+        "stints": stints,
+        "total_time": total_time,
+        "fastest_lap": fastest["lap_time"],
+        "fastest_lap_number": fastest["lap"],
     }
 
 # ---------------------------

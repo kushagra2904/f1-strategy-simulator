@@ -13,17 +13,18 @@ export function StrategyTimeline({
   return (
     <div>
       <p className="hud-label mb-2">Stint Projection</p>
-      <div className="flex h-9 w-full overflow-hidden border border-outline">
+      <div className="flex h-9 w-full overflow-hidden border border-outline bg-surface-low">
         {strategy.map((stint, i) => {
           const meta = COMPOUND_META[stint.compound];
           return (
             <div
               key={i}
-              className="relative flex items-center justify-center border-r border-black/25 last:border-r-0"
+              className="animate-fill relative flex items-center justify-center border-r border-black/30 transition-[filter] last:border-r-0 hover:brightness-110"
               style={{
                 flexGrow: stint.length,
                 background: meta.color,
                 color: meta.fg,
+                animationDelay: `${i * 110}ms`,
               }}
               title={`${meta.label} — ${stint.length} laps`}
             >

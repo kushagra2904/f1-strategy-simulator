@@ -29,11 +29,11 @@ export default function AssetGallery({
   const color = driver?.team_color ?? "#e10600";
 
   return (
-    <section className="glass overflow-hidden">
+    <section className="glass panel-clip edge-accent animate-reveal overflow-hidden">
       <header className="flex flex-wrap items-end justify-between gap-4 p-5">
         <div>
           <p className="hud-label">3D Asset Gallery</p>
-          <h2 className="font-display text-xl font-bold text-on-surface">
+          <h2 className="font-display text-xl font-bold uppercase tracking-wide text-on-surface">
             {driver ? driver.team : "Car"}
           </h2>
         </div>
@@ -48,7 +48,7 @@ export default function AssetGallery({
 
       <div className="h-[540px] w-full">
         <Canvas shadows camera={{ position: [5.8, 3.2, 6.8], fov: 42 }}>
-          <color attach="background" args={["#0b0b12"]} />
+          <color attach="background" args={["#06060a"]} />
           <ambientLight intensity={0.35} />
           <directionalLight
             position={[5, 8, 5]}

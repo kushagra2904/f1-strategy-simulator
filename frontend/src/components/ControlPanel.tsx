@@ -26,10 +26,13 @@ export function ControlPanel({
   disabled,
 }: ControlPanelProps) {
   return (
-    <section className="glass p-6">
-      <h2 className="hud-label">Race Setup</h2>
+    <section className="glass panel-clip edge-accent flex h-full flex-col p-6">
+      <div className="flex items-center gap-2">
+        <h2 className="hud-label">Race Setup</h2>
+        <span className="h-px flex-1 bg-outline" />
+      </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-5 flex flex-1 flex-col gap-5">
         <DriverSelect
           drivers={drivers}
           value={driverId}
@@ -54,7 +57,9 @@ export function ControlPanel({
           type="button"
           onClick={onOptimize}
           disabled={loading || disabled}
-          className="w-full bg-primary px-4 py-3 font-semibold uppercase tracking-wide text-on-primary transition-shadow hover:shadow-[0_0_14px_0_var(--glow)] disabled:cursor-not-allowed disabled:opacity-60 [clip-path:polygon(0_0,calc(100%-10px)_0,100%_10px,100%_100%,0_100%)]"
+          className={`btn-streak mt-auto w-full cursor-pointer bg-primary px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.12em] text-on-primary transition-shadow hover:shadow-[0_0_16px_0_var(--glow)] disabled:cursor-not-allowed disabled:opacity-60 [clip-path:polygon(0_0,calc(100%-12px)_0,100%_12px,100%_100%,0_100%)] ${
+            loading ? "is-running" : ""
+          }`}
         >
           {loading ? "Optimizing…" : "Optimize Strategy"}
         </button>

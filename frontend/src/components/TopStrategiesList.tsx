@@ -12,10 +12,16 @@ export function TopStrategiesList({ strategies }: { strategies: Strategy[] }) {
         {strategies.map((s, i) => (
           <li
             key={i}
-            className="flex items-center justify-between gap-3 border border-outline/60 px-3 py-2"
+            className="flex items-center justify-between gap-3 border-l-2 border-outline bg-surface-low/40 px-3 py-2 transition-colors hover:border-primary hover:bg-surface-container/60"
           >
-            <div className="flex items-center gap-2">
-              <span className="telemetry text-on-surface-variant">#{i + 1}</span>
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`telemetry w-6 text-center text-sm font-bold ${
+                  i === 0 ? "text-primary" : "text-on-surface-variant"
+                }`}
+              >
+                P{i + 1}
+              </span>
               <div className="flex flex-wrap gap-1">
                 {s.strategy.map((st, j) => (
                   <CompoundChip key={j} compound={st.compound} laps={st.length} />

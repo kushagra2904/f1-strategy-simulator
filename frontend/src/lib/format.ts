@@ -8,6 +8,13 @@ export function formatRaceTime(seconds: number): string {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
+/** Format a single lap time as m:ss.mmm (e.g. 105.625 -> "1:45.625"). */
+export function formatLapTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = (seconds % 60).toFixed(3).padStart(6, "0");
+  return `${m}:${s}`;
+}
+
 /** "SOFT (28) → HARD (50)" */
 export function stintSummary(strategy: Stint[]): string {
   return strategy.map((st) => `${st.compound} (${st.length})`).join(" → ");

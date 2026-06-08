@@ -37,7 +37,7 @@ export function ThemeToggle() {
       onClick={cycle}
       title={`Theme: ${LABEL[mode]} (click to change)`}
       aria-label={`Theme: ${LABEL[mode]}. Click to change.`}
-      className="glass flex items-center gap-2 px-3 py-2 text-on-surface transition-colors hover:text-primary"
+      className="glass flex cursor-pointer items-center gap-2 px-3 py-2 text-on-surface transition-colors hover:text-primary [clip-path:polygon(0_0,100%_0,100%_100%,8px_100%,0_calc(100%-8px))]"
     >
       {ICON[mode]}
       <span className="hud-label text-[0.625rem]">{LABEL[mode]}</span>

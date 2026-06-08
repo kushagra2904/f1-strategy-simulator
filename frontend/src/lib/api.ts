@@ -3,6 +3,8 @@ import type {
   OptimizeRequest,
   OptimizeResponse,
   Team,
+  TelemetryRequest,
+  TelemetryResponse,
   Track,
 } from "../types/api";
 
@@ -33,6 +35,16 @@ export function optimizeStrategy(
   body: OptimizeRequest,
 ): Promise<OptimizeResponse> {
   return getJson<OptimizeResponse>("/optimize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export function fetchTelemetry(
+  body: TelemetryRequest,
+): Promise<TelemetryResponse> {
+  return getJson<TelemetryResponse>("/telemetry", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

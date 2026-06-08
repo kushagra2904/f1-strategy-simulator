@@ -11,7 +11,7 @@ export function CompoundChip({
   const meta = COMPOUND_META[compound];
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[0.625rem] font-bold uppercase tracking-wider [clip-path:polygon(0_0,100%_0,100%_100%,5px_100%,0_calc(100%-5px))]"
       style={{ background: meta.color, color: meta.fg }}
     >
       <span>{meta.label}</span>

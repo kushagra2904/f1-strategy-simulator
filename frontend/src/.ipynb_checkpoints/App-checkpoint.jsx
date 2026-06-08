@@ -3,6 +3,12 @@ import "./App.css";
 import StrategyTimeline from "./components/StrategyTimeline.jsx";
 
 /* ============================
+   BACKEND CONFIG
+============================ */
+
+const API_BASE = "https://f1-strategy-simulator.onrender.com";
+
+/* ============================
    DRIVER & TRACK DEFINITIONS
 ============================ */
 
@@ -30,30 +36,30 @@ const DRIVERS = [
 ];
 
 const TRACKS = [
-  { name: "Bahrain", file: "bahrain.png" },
-  { name: "Saudi Arabia (Jeddah)", file: "jeddah.png" },
-  { name: "Australia (Albert Park)", file: "albert_park.png" },
-  { name: "Japan (Suzuka)", file: "suzuka.png" },
-  { name: "China (Shanghai)", file: "shanghai.png" },
-  { name: "Miami", file: "miami.png" },
-  { name: "Emilia Romagna (Imola)", file: "imola.png" },
-  { name: "Monaco", file: "monaco.png" },
-  { name: "Canada (Montreal)", file: "montreal.png" },
-  { name: "Spain (Barcelona)", file: "barcelona.png" },
-  { name: "Austria (Spielberg)", file: "spielberg.png" },
-  { name: "Great Britain (Silverstone)", file: "silverstone.png" },
-  { name: "Hungary (Budapest)", file: "hungary.png" },
-  { name: "Belgium (Spa)", file: "spa.png" },
-  { name: "Netherlands (Zandvoort)", file: "zandvoort.png" },
-  { name: "Italy (Monza)", file: "monza.png" },
-  { name: "Azerbaijan (Baku)", file: "baku.png" },
-  { name: "Singapore", file: "singapore.png" },
-  { name: "United States (COTA)", file: "austin.png" },
-  { name: "Mexico", file: "mexico.png" },
-  { name: "Brazil (Interlagos)", file: "interlagos.png" },
-  { name: "Las Vegas", file: "vegas.png" },
-  { name: "Qatar (Lusail)", file: "lusail.png" },
-  { name: "Abu Dhabi (Yas Marina)", file: "yas_marina.png" },
+  { name: "Bahrain", file: "bahrain.png", laps: 57 },
+  { name: "Saudi Arabia (Jeddah)", file: "jeddah.png", laps: 50 },
+  { name: "Australia (Albert Park)", file: "albert_park.png", laps: 58 },
+  { name: "Japan (Suzuka)", file: "suzuka.png", laps: 53 },
+  { name: "China (Shanghai)", file: "shanghai.png", laps: 56 },
+  { name: "Miami", file: "miami.png", laps: 57 },
+  { name: "Emilia Romagna (Imola)", file: "imola.png", laps: 63 },
+  { name: "Monaco", file: "monaco.png", laps: 78 },
+  { name: "Canada (Montreal)", file: "montreal.png", laps: 70 },
+  { name: "Spain (Barcelona)", file: "barcelona.png", laps: 66 },
+  { name: "Austria (Spielberg)", file: "spielberg.png", laps: 71 },
+  { name: "Great Britain (Silverstone)", file: "silverstone.png", laps: 52 },
+  { name: "Hungary (Budapest)", file: "hungary.png", laps: 70 },
+  { name: "Belgium (Spa)", file: "spa.png", laps: 44 },
+  { name: "Netherlands (Zandvoort)", file: "zandvoort.png", laps: 72 },
+  { name: "Italy (Monza)", file: "monza.png", laps: 53 },
+  { name: "Azerbaijan (Baku)", file: "baku.png", laps: 51 },
+  { name: "Singapore", file: "singapore.png", laps: 62 },
+  { name: "United States (COTA)", file: "austin.png", laps: 56 },
+  { name: "Mexico", file: "mexico.png", laps: 71 },
+  { name: "Brazil (Interlagos)", file: "interlagos.png", laps: 71 },
+  { name: "Las Vegas", file: "vegas.png", laps: 50 },
+  { name: "Qatar (Lusail)", file: "lusail.png", laps: 57 },
+  { name: "Abu Dhabi (Yas Marina)", file: "yas_marina.png", laps: 58 },
 ];
 
 /* ============================
@@ -76,7 +82,7 @@ export default function App() {
     try {
       const selectedDriver = DRIVERS.find((d) => d.id === driver);
 
-      const response = await fetch("https://f1-strategy-simulator.onrender.com/optimize", {
+      const response = await fetch(`${API_BASE}/optimize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -129,34 +135,16 @@ export default function App() {
             ))}
           </select>
 
-          {/* OPTIMIZE BUTTON */}
           <button
             className={`optimize-btn ${loading ? "loading" : ""}`}
             onClick={optimizeStrategy}
             disabled={loading}
           >
-            {loading ? (
-              <div className="loader">
-                <span className="spinner" />
-                Optimizing Strategy…
-              </div>
-            ) : (
-              "Optimize Strategy"
-            )}
+            {loading ? "Optimizing Strategy…" : "Optimize Strategy"}
           </button>
 
           {error && <p className="error-text">{error}</p>}
 
-          {/* DRIVER DELTA */}
-          {result?.driver_delta !== undefined && (
-            <p className="driver-delta">
-              <strong>Driver Pace Delta:</strong>{" "}
-              {result.driver_delta > 0 ? "+" : ""}
-              {result.driver_delta.toFixed(2)} s / lap
-            </p>
-          )}
-
-          {/* BEST STRATEGY */}
           {result?.best_strategy && (
             <div className="strategy-box">
               <h3>🏁 Best Strategy</h3>
@@ -167,34 +155,10 @@ export default function App() {
                 </p>
               ))}
 
-              <p>
-                <strong>Total Time:</strong>{" "}
-                {result.best_strategy.total_time}s
-              </p>
-
               <StrategyTimeline
                 strategy={result.best_strategy.strategy}
-                totalLaps={result.track_laps}
+                totalLaps={track.laps}
               />
-            </div>
-          )}
-
-          {/* TOP 5 STRATEGIES */}
-          {result?.top_5_strategies && (
-            <div className="top-strategies">
-              <h4>📊 Top 5 Strategies</h4>
-
-              {result.top_5_strategies.map((s, i) => (
-                <div key={i} className="strategy-card">
-                  <h5>Strategy #{i + 1}</h5>
-                  <p className="strategy-time">⏱ {s.total_time}s</p>
-
-                  <StrategyTimeline
-                    strategy={s.strategy}
-                    totalLaps={result.track_laps}
-                  />
-                </div>
-              ))}
             </div>
           )}
         </div>

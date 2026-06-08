@@ -5,26 +5,28 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   Apex Engineering Interface — design tokens
+   PIT WALL — telemetry command-center design tokens
+   Dark-first carbon aesthetic with a racing-red signal accent.
    Semantic CSS variables, defined per theme. Tailwind utilities
    (bg-surface, text-on-surface, ...) resolve to these via @theme.
    ============================================================ */
 
 :root {
-  /* Light theme */
-  --surface: #eef0f4;
+  /* Light theme — polished "daylight pit lane" variant */
+  --void: #e2e5ec;
+  --surface: #eceef3;
   --surface-dim: #d9dce3;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f6f7fa;
-  --surface-container: #f0f1f6;
-  --surface-container-high: #e7e9ef;
-  --surface-container-highest: #e0e3ea;
-  --on-surface: #1a1b22;
-  --on-surface-variant: #44464f;
-  --outline: #c2c5cf;
+  --surface-container-low: #f5f6f9;
+  --surface-container: #eef0f5;
+  --surface-container-high: #e5e8ef;
+  --surface-container-highest: #dce0e8;
+  --on-surface: #0e0f14;
+  --on-surface-variant: #4a4d58;
+  --outline: #c5c9d3;
   --outline-strong: #9aa0ac;
 
-  --primary: #e10600;       /* Ferrari red — primary action / alerts */
+  --primary: #e10600;       /* racing red — primary action / alerts */
   --on-primary: #ffffff;
   --primary-muted: #ffd9d6;
 
@@ -39,52 +41,61 @@
   --c-medium: #d8a200;
   --c-hard: #5b6470;
 
-  /* Glassmorphism + glow */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(20, 20, 30, 0.10);
-  --glass-rim: rgba(255, 255, 255, 0.75);
-  --glow: rgba(225, 6, 0, 0.22);
+  /* Glass + glow */
+  --glass-bg: rgba(255, 255, 255, 0.68);
+  --glass-border: rgba(15, 15, 25, 0.10);
+  --glass-rim: rgba(255, 255, 255, 0.85);
+  --glow: rgba(225, 6, 0, 0.28);
+
+  /* Atmosphere */
+  --grid-line: rgba(15, 20, 35, 0.05);
+  --streak-line: rgba(225, 6, 0, 0.05);
 
   color-scheme: light;
 }
 
 .dark {
-  /* Dark theme — values from the Stitch "Apex Engineering Interface" palette */
-  --surface: #13131b;
-  --surface-dim: #0d0d16;
-  --surface-container-lowest: #0d0d16;
-  --surface-container-low: #1b1b24;
-  --surface-container: #1f1f28;
-  --surface-container-high: #292933;
-  --surface-container-highest: #34343e;
-  --on-surface: #e4e1ee;
-  --on-surface-variant: #b9b9c6;
-  --outline: #3a3a45;
-  --outline-strong: #5e5e6b;
+  /* Dark theme — near-black carbon command center (OLED-friendly) */
+  --void: #06060a;
+  --surface: #0a0a0e;
+  --surface-dim: #060609;
+  --surface-container-lowest: #0c0c12;
+  --surface-container-low: #121218;
+  --surface-container: #16161d;
+  --surface-container-high: #1d1d26;
+  --surface-container-highest: #26262f;
+  --on-surface: #f2f3f7;
+  --on-surface-variant: #a8aab6;
+  --outline: #2a2a33;
+  --outline-strong: #45454f;
 
-  --primary: #e10600;
+  --primary: #ff1e27;       /* hotter red for OLED pop */
   --on-primary: #ffffff;
-  --primary-muted: #4a0f0d;
+  --primary-muted: #3a0a0c;
 
-  --secondary: #00d2be;     /* Mercedes cyan */
+  --secondary: #2be8d6;     /* electric cyan */
   --on-secondary: #00201c;
 
   --warning: #f9d949;
-  --error: #ffb4ab;
+  --error: #ff5a52;
 
-  --c-soft: #ff3b30;
+  --c-soft: #ff2d2d;
   --c-medium: #ffd23f;
-  --c-hard: #d7dbe3;
+  --c-hard: #dce3ec;
 
-  --glass-bg: rgba(21, 21, 30, 0.60);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-rim: rgba(255, 255, 255, 0.14);
-  --glow: rgba(225, 6, 0, 0.45);
+  --glass-bg: rgba(16, 16, 22, 0.66);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-rim: rgba(255, 255, 255, 0.12);
+  --glow: rgba(255, 30, 39, 0.5);
+
+  --grid-line: rgba(255, 255, 255, 0.035);
+  --streak-line: rgba(255, 30, 39, 0.06);
 
   color-scheme: dark;
 }
 
 @theme inline {
+  --color-void: var(--void);
   --color-surface: var(--surface);
   --color-surface-dim: var(--surface-dim);
   --color-surface-lowest: var(--surface-container-lowest);
@@ -109,9 +120,9 @@
   --color-medium: var(--c-medium);
   --color-hard: var(--c-hard);
 
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Syncopate", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
 }
 
 @layer base {
@@ -121,41 +132,174 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--surface);
+    background: var(--void);
     color: var(--on-surface);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+  /* Visible, on-brand focus ring for keyboard nav. */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Level 1+ panel: glass surface with a top/left rim light. */
+  /* ---- Surfaces ------------------------------------------------ */
+  /* Level 1+ panel: carbon glass with a top/left rim light. */
   .glass {
     background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
     border: 1px solid var(--glass-border);
-    box-shadow: inset 1px 1px 0 0 var(--glass-rim);
+    box-shadow:
+      inset 1px 1px 0 0 var(--glass-rim),
+      0 18px 40px -28px rgba(0, 0, 0, 0.7);
   }
+  /* Angular HUD-module corner cut (top-right + bottom-left). */
+  .panel-clip {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 16px) 0,
+      100% 16px,
+      100% 100%,
+      16px 100%,
+      0 calc(100% - 16px)
+    );
+  }
+  /* Hairline accent in the cut corner is faked with a layered bg edge. */
+  .edge-accent {
+    position: relative;
+  }
+  .edge-accent::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 28px;
+    background: var(--primary);
+    box-shadow: 0 0 10px 0 var(--glow);
+  }
+
+  /* ---- Type ---------------------------------------------------- */
   /* Uppercase HUD-style label. */
   .hud-label {
     font-family: var(--font-sans);
     font-size: 0.6875rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--on-surface-variant);
+  }
+  /* Wide kinetic display caps. */
+  .kinetic {
+    font-family: var(--font-display);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   /* Monospaced, tabular numerals so changing values don't cause jitter. */
   .telemetry {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
   }
-  /* Focused/active digital glow. */
+
+  /* ---- Glow ---------------------------------------------------- */
   .glow-primary {
-    box-shadow: 0 0 12px 0 var(--glow);
+    box-shadow: 0 0 14px 0 var(--glow);
   }
+  .text-glow {
+    text-shadow: 0 0 18px var(--glow);
+  }
+
+  /* ---- Atmospheric backdrop ----------------------------------- */
+  /* Fixed full-bleed layer: carbon weave + speed streaks + vignette. */
+  .backdrop-pitwall {
+    background-color: var(--void);
+    background-image:
+      /* diagonal speed streaks */
+      repeating-linear-gradient(
+        115deg,
+        transparent 0,
+        transparent 38px,
+        var(--streak-line) 38px,
+        var(--streak-line) 40px
+      ),
+      /* fine telemetry grid */
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+      /* top vignette glow */
+      radial-gradient(
+        120% 80% at 50% -10%,
+        var(--streak-line),
+        transparent 60%
+      );
+    background-size: auto, 44px 44px, 44px 44px, auto;
+  }
+
+  /* ---- Optimize button speed-streak shimmer ------------------- */
+  .btn-streak {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-streak::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+  }
+  .btn-streak.is-running::after {
+    animation: streak 1s linear infinite;
+  }
+}
+
+/* ============================================================
+   Motion — concentrated on load + on optimize.
+   ============================================================ */
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fill-bar {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+@keyframes streak {
+  to { transform: translateX(120%); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px 0 var(--glow); }
+  50%      { box-shadow: 0 0 18px 2px var(--glow); }
+}
+
+.animate-reveal {
+  animation: reveal 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-fill {
+  transform-origin: left center;
+  animation: fill-bar 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal,
+  .animate-fill,
+  .animate-pulse-glow,
+  .btn-streak.is-running::after {
+    animation: none !important;
+  }
+  .animate-reveal { opacity: 1; transform: none; }
+  .animate-fill { transform: scaleX(1); }
 }
